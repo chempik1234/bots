@@ -1,6 +1,7 @@
 import vk_api
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 import random
+from datetime import datetime
 
 
 def main():
@@ -16,10 +17,14 @@ def main():
             print('Для меня от:', event.obj.message['from_id'])
             print('Текст:', event.obj.message['text'])
             vk = vk_session.get_api()
-            users = vk.users.get(user_ids=event.obj.message['from_id'], fields='first_name,city')[0]
-            text = 'Привет, ' + users['first_name'] + '!'
-            if users.get('city'):
-                text += ' Как поживает ' + users['city']['title'] + '?'
+            days = ['понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота', 'воскресенье']
+            text = 'Если ввести сообщение, в котором есть слова «время», «число», «дата», «день», можно получить' \
+                   'сегодняшнюю дату, московское время и день недели'
+            if any([i in event.obj.message['text'].lower() for i in ['время', 'число', 'дата', 'день']]):
+                ts = int(event.obj.message['date'])
+                date = datetime.utcfromtimestamp(ts)
+                text = 'Дата: ' + date.strftime('%Y-%m-%d') + ' время: ' + date.strftime('%H:%M:%S') + \
+                       ' день недели: ' + days[date.weekday()]
             vk.messages.send(user_id=event.obj.message['from_id'],
                              message=text,
                              random_id=random.randint(0, 2 ** 64))
