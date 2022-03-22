@@ -15,7 +15,7 @@ def auth_handler():
 
 
 def main():
-    login, password = LOGIN, PASSWORD
+    login, password = 'dandijar@yandex.ru', 'VKdan!S.143'
     vk_session = vk_api.VkApi(login, password, auth_handler=auth_handler)
     try:
         vk_session.auth(token_only=True)
