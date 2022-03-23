@@ -43,7 +43,7 @@ def main():
             text = 'Привет, ' + users['first_name'] + '!'
             vk.messages.send(user_id=event.obj.message['from_id'],
                              message=text,
-                             attachement=random.choice(ids),
+                             attachment=random.choice(ids),
                              random_id=random.randint(0, 2 ** 64))
 
 
