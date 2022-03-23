@@ -16,15 +16,17 @@ def main():
             print('Новое сообщение:')
             print('Для меня от:', event.obj.message['from_id'])
             print('Текст:', event.obj.message['text'])
+            message = event.obj.message['text']
             vk = vk_session.get_api()
             days = ['понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота', 'воскресенье']
-            text = 'Если ввести сообщение, в котором есть слова «время», «число», «дата», «день», можно получить' \
-                   'сегодняшнюю дату, московское время и день недели'
-            if any([i in event.obj.message['text'].lower() for i in ['время', 'число', 'дата', 'день']]):
-                ts = int(event.obj.message['date'])
-                date = datetime.utcfromtimestamp(ts)
-                text = 'Дата: ' + date.strftime('%Y-%m-%d') + ' время: ' + date.strftime('%H:%M:%S') + \
-                       ' день недели: ' + days[date.weekday()]
+            text = 'Введите дату в формате YYYY-MM-DD, и я скажу какой тогда был день'
+            if len(message) == 10 and message[0: 4].isdigit() and message[5: 7].isdigit() and message[8:].isdigit() \
+                    and message[4] == message[7] == '-':
+                try:
+                    date = datetime.strptime(message, '%Y-%m-%d').date()
+                    text = days[date.weekday()]
+                except Exception:
+                    text = 'Неправильная дата'
             vk.messages.send(user_id=event.obj.message['from_id'],
                              message=text,
                              random_id=random.randint(0, 2 ** 64))
