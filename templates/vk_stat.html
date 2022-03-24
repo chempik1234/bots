@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet"
+          href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+          integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
+          crossorigin="anonymous">
+    <title>{{title}}</title>
+</head>
+<body>
+<header>
+    <nav class="navbar navbar-light bg-light">
+        <a class="navbar-brand" href="#">Vk Statistics</a>
+    </nav>
+</header>
+    {% for tablename in dicts %}
+    <table width="50%" style="margin: 0 auto;">
+        <thead><h1 style="text-align: center; color: {{td[tablename][0]}}">{{tablename}}</h1></thead>
+        <tbody>
+        {% for i in dicts[tablename] %}
+            <tr>
+                <td style="background-color: {{td[tablename][0]}}; border: 1px solid black;"><h3>{{i}}</h3></td>
+                <td style="background-color: {{td[tablename][1]}}; border: 1px solid black;"><h3>{{dicts[tablename][i]}}</h3></td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% endfor %}
+    <table width="50%" style="margin: 0 auto;">
+        <thead><h1 style="text-align: center; color: {{td['Cities']}}">Cities</h1></thead>
+        <tbody>
+        {% for i in cities %}
+            <tr><td style="background-color: {{td['Cities']}}; border: 1px solid black;"><h3>{{i}}</h3></td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
