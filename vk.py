@@ -97,7 +97,7 @@ def main():
                                      message='Не найдены результаты. Всё заново',
                                      random_id=random.randint(0, 2 ** 64))
                     stages[from_id][0] = 1
-                types = {'Спутник': 'sat', 'Схема': 'map', 'Гибрид': 'sat, skl'}
+                types = {'Спутник': 'sat', 'Схема': 'map', 'Гибрид': 'sat,skl'}
                 map_params = {
                     "ll": find_coords(address),
                     "spn": get_size(address),
@@ -105,6 +105,7 @@ def main():
                 }
                 map_api_server = "http://static-maps.yandex.ru/1.x/"
                 response = requests.get(map_api_server, params=map_params)
+                print(response.url)
                 path = os.path.join('static\\img\\maps', f'map{from_id}.jpg')
                 if os.path.isfile(path):
                     os.remove(path)
