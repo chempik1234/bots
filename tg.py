@@ -15,19 +15,20 @@ def remove_job_if_exists(name, context):
     return True
 
 
-# Обычный обработчик, как и те, которыми мы пользовались раньше.
+def task(context):
+    """Выводит сообщение"""
+    job = context.job
+    context.bot.send_message(job.context, text='Вернулся!')
+
+
 def set_timer(update, context):
-    """Добавляем задачу в очередь"""
     chat_id = update.message.chat_id
     try:
-        # args[0] должен содержать значение аргумента
-        # (секунды таймера)
         due = int(context.args[0])
         if due < 0:
             update.message.reply_text(
                 'Извините, не умеем возвращаться в прошлое')
             return
-
         # Добавляем задачу в очередь
         # и останавливаем предыдущую (если она была)
         job_removed = remove_job_if_exists(
@@ -63,6 +64,7 @@ def main():
     dp = updater.dispatcher
     dp.add_handler(CommandHandler("time", time_))
     dp.add_handler(CommandHandler("date", date_))
+    dp.add_handler(CommandHandler("set_timer", set_timer, pass_args=True))
     updater.start_polling()
     updater.idle()
 
