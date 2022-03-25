@@ -1,112 +1,62 @@
-import random
-from telegram import ReplyKeyboardMarkup
-from telegram.ext import CommandHandler
+from telegram.ext import CommandHandler, ConversationHandler
 from telegram.ext import Updater, MessageHandler, Filters
-times = {'30 минут': 30 * 60,
-         '1 минута': 1 * 60,
-         '5 минут': 5 * 60}
-cubes = {'кинуть один шестигранный  кубик': lambda x: str(random.randint(1, 6)),
-         'кинуть 2 шестигранных кубика одноверменно': lambda x: str(random.randint(1, 6)) + ' ' +
-                                                                str(random.randint(1, 6)),
-         'кинуть 20-гранный кубик': lambda x: str(random.randint(1, 20))}
-chat_ids_string = {}
-
-
-def remove_job_if_exists(name, context):
-    """Удаляем задачу по имени.
-    Возвращаем True если задача была успешно удалена."""
-    current_jobs = context.job_queue.get_jobs_by_name(name)
-    if not current_jobs:
-        return False
-    for job in current_jobs:
-        job.schedule_removal()
-    return True
-
-
-def task(context):
-    """Выводит сообщение"""
-    job = context.job
-    context.bot.send_message(job.context, text=chat_ids_string[job.context] + ' истекло')
-
-
-def set_timer(update, context, string):
-    chat_id = update.message.chat_id
-    try:
-        if string not in times.keys():
-            return
-        due = times[string]
-        if due < 0:
-            update.message.reply_text(
-                'Извините, не умеем возвращаться в прошлое')
-            return
-        # Добавляем задачу в очередь
-        # и останавливаем предыдущую (если она была)
-        job_removed = remove_job_if_exists(
-            str(chat_id),
-            context
-        )
-        chat_ids_string[chat_id] = string
-        context.job_queue.run_once(
-            task,
-            due,
-            context=chat_id,
-            name=str(chat_id)
-        )
-        text = f'засек {string}'
-        if job_removed:
-            text += ' Старая задача удалена.'
-        # Присылаем сообщение о том, что всё получилось.
-        update.message.reply_text(text)
-
-    except (IndexError, ValueError) as err:
-        update.message.reply_text(err.__str__)
-    except Exception as err:
-        print(err)
 
 
 def start(update, context):
-    reply_keyboard = [['/dice', '/timer']]
-    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     update.message.reply_text(
-        "/dice - кинуть кубики, /timer - засечь время",
-        reply_markup=markup
-    )
+        "Привет. Пройдите небольшой опрос, пожалуйста!\n"
+        "Вы можете прервать опрос, послав команду /stop, или пропустить вопрос, послав команду /skip.\n"
+        "В каком городе вы живёте?")
+    return 1
 
 
-def timer_keys(update, context):
-    reply_keyboard = [['30 минут', '5 минут', '1 минута']]
-    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+# Добавили словарь user_data в параметры.
+def first_response(update, context):
+    if update.message.text == '/skip':
+        context.user_data['locality'] = ""
+        update.message.reply_text("Какая погода у вас за окном?")
+        return 2
+    context.user_data['locality'] = update.message.text
     update.message.reply_text(
-        text="Сколько времени засечь?",
-        reply_markup=markup
-    )
+        "Какая погода в городе {0}?".format(
+            context.user_data['locality']))
+    return 2
 
 
-def dice(update, context):
-    reply_keyboard = [['кинуть один шестигранный  кубик', 'кинуть 2 шестигранных кубика одноверменно'],
-                      ['кинуть 20-гранный кубик', 'вернуться назад']]
-    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
-    update.message.reply_text(
-        "Сколько кубиков бросить?",
-        reply_markup=markup
-    )
+# Добавили словарь user_data в параметры.
+def second_response(update, context):
+    weather = update.message.text
+    if context.user_data['locality']:
+        update.message.reply_text(
+            "Спасибо за участие в опросе! Привет, {0}!".format(
+                context.user_data['locality']))
+    else:
+        update.message.reply_text("Спасибо за участие в опросе!")
+    return ConversationHandler.END
 
 
-def check_rus_args(update, context):
-    if update.message.text in times.keys():
-        set_timer(update, context, update.message.text)
-    elif update.message.text in cubes.keys():
-        update.message.reply_text(cubes[update.message.text](1))
+def stop(update, context):
+    return ConversationHandler.END
 
 
 def main():
     updater = Updater('5147513805:AAEiG0-XjDlug2pmoPcRPuufLSZBYs8jbIc', use_context=True)
     dp = updater.dispatcher
-    dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(CommandHandler("dice", dice))
-    dp.add_handler(CommandHandler("timer", timer_keys, pass_args=True))
-    text_handler = MessageHandler(Filters.text, check_rus_args)
-    dp.add_handler(text_handler)
+    conv_handler = ConversationHandler(
+        # Без изменений
+        entry_points=[CommandHandler('start', start)],
+
+        states={
+            # Добавили user_data для сохранения ответа.
+            1: [MessageHandler(Filters.text, first_response, pass_user_data=True)],
+            # ...и для его использования.
+            2: [MessageHandler(Filters.text, second_response, pass_user_data=True)]
+        },
+
+        # Без изменений
+        fallbacks=[CommandHandler('stop', stop)]
+    )
+    dp.add_handler(conv_handler)
     updater.start_polling()
     updater.idle()
 
