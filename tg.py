@@ -1,62 +1,66 @@
 from telegram.ext import CommandHandler, ConversationHandler
 from telegram.ext import Updater, MessageHandler, Filters
-sculptures = ['Венера Милосская', 'Дискобол', 'Капитолийская волчица', 'Дорифор']
-paints = ['Рождение Венеры', 'Даная', 'Весна', 'Сатурн, пожирающий своего сына', 'Похищение Европы', 'Три грации',
-          'Венера Урбинская', 'Падение Икара']
-books = ['Иллиада', 'Одиссея', 'Риторика', 'Аппология Сократа']
+text = 'Черемуха душистая\n' \
+       'С весною расцвела\n' \
+       'И ветки золотистые,\n' \
+       'Что кудри, завила.\n' \
+       'Кругом роса медвяная\n' \
+       'Сползает по коре,\n' \
+       'Под нею зелень пряная\n' \
+       'Сияет в серебре.\n' \
+       'А рядом, у проталинки,\n' \
+       'В траве, между корней,\n' \
+       'Бежит, струится маленький\n' \
+       'Серебряный ручей.\n' \
+       'Черемуха душистая,\n' \
+       'Развесившись, стоит,\n' \
+       'А зелень золотистая\n' \
+       'На солнышке горит.\n' \
+       'Ручей волной гремучею\n' \
+       'Все ветки обдает\n' \
+       'И вкрадчиво под кручею\n' \
+       'Ей песенки поет.'
+strings = text.split('\n')
 
 
 def start(update, context):
-    update.message.reply_text(
-        "Здравствуйте! В нашем музее представлены известные античные скульптуры, картины, научные труды и книги.\n"
-        "Не забудьте снять верхнюю одежду и надеть чистую обувь, залы должны быть чистыми!\n"
-        "Вы можете пройти только в комнату 1"
+    update.message.reply_text('Я читаю первую строчку стихотворения, а ты - вторую,'
+                              ' затем я - третью, ты - четвёртую и так до конца.\n'
+                              '/stop - прервать работу\n/suphler - подсказка\n'
+                              'Стихотворение Есенина "Черёмуха"\n'
     )
-    return 1
+    context.user_data['string'] = 0
+    return string_read(update, context)
 
 
-def room1(update, context):
-    update.message.reply_text("Вы в зале 1. Здесь находятся скульптуры, например:\n* " + '\n* '.join(sculptures) +
-                              '. Можно выйти /exit или пройти в комнату с картинами /room2')
-    return 2
+def suphler(update, context):
+    update.message.reply_text('Подсказка: ' + strings[context.user_data['string']])
 
 
-def room2(update, context):
-    if update.message.text == "/exit":
-        return exit_(update, context)
-    elif update.message.text == "/room1":
-        update.message.reply_text("Вы в зале 2. Здесь находятся картины, например:\n* " + '\n* '.join(paints) +
-                                  '. Можно пройти только в 3 зал, там античные книги.')
-        return 3
-    else:
-        update.message.reply_text("Раз вы не ушли, находитесь в зале 2. Здесь находятся картины, например:\n* " +
-                                  '\n* '.join(paints) + '. Можно пройти только в 3 зал, там античные книги.')
-        return 3
+def string_read(update, context):
+    n = context.user_data['string']
+    update.message.reply_text(strings[n])
+    context.user_data['string'] += 1
+    return 2 if context.user_data['string'] != len(strings) else exit_(update, context)
 
 
-def room3(update, context):
-    update.message.reply_text("Вы в зале 3. Здесь представлены книги, есть оригинальные и переведённые. "
-                              "Некоторые книги из общего списка:\n* " + "\n* ".join(books) +
-                              '.\nПройти можно в /room1 (скульптуры) и /room4 (научные труды)')
-    return 4
-
-
-def room4(update, context):
-    if update.message.text == "/room1":
-        return room1(update, context)
-    elif update.message.text == "/room4":
-        update.message.reply_text("Вы в зале 4. Здесь находятся научные труды Аристотеля, Платона, Гиппократа, "
-                                  "Архимеда и других учёных. Можно пройти только в 1 зал, там скульптуры.")
-        return 1
-    else:
-        update.message.reply_text("Раз вы не ушли, находитесь в зале 2. Здесь находятся научные труды Аристотеля,"
-                                  "Платона, Гиппократа, Архимеда и других учёных. Можно пройти только в 1 зал, "
-                                  "там скульптуры.")
-        return 1
+def string_check(update, context):
+    if update.message.text == '/suphler':
+        return suphler(update, context)
+    if update.message.text == '/stop':
+        return stop(update, context)
+    n = context.user_data['string']
+    if update.message.text != strings[n]:
+        update.message.reply_text('Нет, не так!')
+        suphler(update, context)
+        return 2
+    context.user_data['string'] += 1
+    return string_read(update, context) if context.user_data['string'] != len(strings) else exit_(update,
+                                                                                                  context)
 
 
 def exit_(update, context):
-    update.message.reply_text("Вы на выходе. Не забудьте забрать свои вещи из гардероба. Всего доброго!")
+    update.message.reply_text("Круто! Это была последняя строчка, работа окончена.")
     return ConversationHandler.END
 
 
@@ -72,17 +76,16 @@ def main():
         entry_points=[CommandHandler('start', start)],
 
         states={
-            1: [MessageHandler(Filters.text, room1)],
-            2: [MessageHandler(Filters.text, room2)],
-            3: [MessageHandler(Filters.text, room3)],
-            4: [MessageHandler(Filters.text, room4)],
-            5: [MessageHandler(Filters.text, exit_)]
+            1: [MessageHandler(Filters.text, string_read, pass_user_data=True)],
+            2: [MessageHandler(Filters.text, string_check, pass_user_data=True)],
+            3: [MessageHandler(Filters.text, exit_)]
         },
 
         # Без изменений
         fallbacks=[CommandHandler('stop', stop)]
     )
     dp.add_handler(conv_handler)
+    dp.add_handler(CommandHandler('suphler', suphler, pass_user_data=True))
     updater.start_polling()
     updater.idle()
 
