@@ -50,7 +50,9 @@ def geocoder(update, context):
             caption="Нашёл:"
         )
     except Exception as err:
-        d = {'list index out of range': 'Ничего не найдено'}
+        d = {'list index out of range': 'Ничего не найдено',
+             'Failed to get http url content': 'Ничего не найдено',
+             'Wrong file identifier/http url specified': 'Ничего не найдено'}
         text = err.__str__()
         if text in d.keys():
             text = d[text]
@@ -58,7 +60,7 @@ def geocoder(update, context):
 
 
 def main():
-    updater = Updater('5147513805:AAEiG0-XjDlug2pmoPcRPuufLSZBYs8jbIc', use_context=True)
+    updater = Updater(TOKEN, use_context=True)
     dp = updater.dispatcher
     dp.add_handler(MessageHandler(Filters.text, geocoder))
     updater.start_polling()
