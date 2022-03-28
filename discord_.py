@@ -248,5 +248,5 @@ class Translator(commands.Cog):
 
 bot = commands.Bot(command_prefix='!!', intents=intents)
 bot.add_cog(Translator(bot))
-TOKEN = "OTU3NTM2MjE1MDQzODA5Mjgw.YkANFw.VUDBQHMImasDVYqOTITooNDIv00"
+TOKEN = None
 bot.run(TOKEN)
